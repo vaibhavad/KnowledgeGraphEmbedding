@@ -335,6 +335,9 @@ def main(args):
     logging.info('gamma = %f' % args.gamma)
     logging.info('negative_adversarial_sampling = %s' %
                  str(args.negative_adversarial_sampling))
+    logging.info('Only left to right = %s' % str(args.only_ltr))
+    logging.info('Uniform sampling in loss function = %s' %
+                 str(args.uni_weight))
     if args.negative_adversarial_sampling:
         logging.info('adversarial_temperature = %f' %
                      args.adversarial_temperature)
