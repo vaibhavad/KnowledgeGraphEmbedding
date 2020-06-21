@@ -383,8 +383,11 @@ class KGEModel(nn.Module):
                 collate_fn=TestDataset.collate_fn
             )
 
-            # test_dataset_list = [test_dataloader_head, test_dataloader_tail]
-            test_dataset_list = [test_dataloader_tail]
+            if args.only_ltr:
+                test_dataset_list = [test_dataloader_tail]
+            else:
+                test_dataset_list = [
+                    test_dataloader_head, test_dataloader_tail]
 
             logs = []
 

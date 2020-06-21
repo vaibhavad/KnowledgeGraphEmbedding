@@ -9,6 +9,8 @@ import json
 import logging
 import os
 import random
+import glob
+import re
 
 import numpy as np
 import torch
@@ -60,11 +62,13 @@ def parse_args(args=None):
                         type=int, help='valid/test batch size')
     parser.add_argument('--uni_weight', action='store_true',
                         help='Otherwise use subsampling weighting like in word2vec')
+    parser.add_argument('--only_ltr', action='store_true',
+                        help='Train/Evaluate only left to right')
 
     parser.add_argument('-lr', '--learning_rate', default=0.0001, type=float)
     parser.add_argument('-cpu', '--cpu_num', default=10, type=int)
     parser.add_argument('-init', '--init_checkpoint', default=None, type=str)
-    parser.add_argument('-save', '--save_path', default=None, type=str)
+    parser.add_argument('-save', '--save_path', default='models', type=str)
     parser.add_argument('--max_steps', default=100000, type=int)
     parser.add_argument('--warm_up_steps', default=None, type=int)
 
@@ -195,6 +199,11 @@ def main(args):
     if args.do_train and args.save_path is None:
         raise ValueError('Where do you want to save your trained model?')
 
+    dataset_name = args.data_path[5:]
+    existing_logs = list(
+        glob.glob(f'{args.save_path}/{args.model}_{dataset_name}_*'))
+    new_log_index = len(existing_logs)
+    args.save_path = f'{args.save_path}/{args.model}_{dataset_name}_{new_log_index}'
     if args.save_path and not os.path.exists(args.save_path):
         os.makedirs(args.save_path)
         os.makedirs(os.path.join(args.save_path, 'best'))
@@ -229,6 +238,7 @@ def main(args):
     args.nentity = nentity
     args.nrelation = nrelation
 
+    logging.info('Saving logs in : %s' % args.save_path)
     logging.info('Model: %s' % args.model)
     logging.info('Data Path: %s' % args.data_path)
     logging.info('#entity: %d' % nentity)
@@ -286,7 +296,7 @@ def main(args):
         )
 
         train_iterator = BidirectionalOneShotIterator(
-            train_dataloader_head, train_dataloader_tail)
+            train_dataloader_head, train_dataloader_tail, args.only_ltr)
 
         # Set training configuration
         current_learning_rate = args.learning_rate
@@ -353,7 +363,7 @@ def main(args):
                 )
                 warm_up_steps = warm_up_steps * 3
 
-            if step % args.save_checkpoint_steps == 0:
+            if step % args.save_checkpoint_steps == 0 and step > 0:
                 save_variable_list = {
                     'step': step,
                     'current_learning_rate': current_learning_rate,
@@ -369,7 +379,7 @@ def main(args):
                 log_metrics('Training average', step, metrics)
                 training_logs = []
 
-            if args.do_valid and step % args.valid_steps == 0:
+            if args.do_valid and step % args.valid_steps == 0 and step > 0:
                 logging.info('Evaluating on Valid Dataset...')
                 metrics = kge_model.test_step(
                     kge_model, valid_triples, all_true_triples, args)
