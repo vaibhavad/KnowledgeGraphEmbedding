@@ -10,7 +10,7 @@
 ####
 #PBS -l select=1:ncpus=4:ngpus=1
 ### Specify "wallclock time" required for this job, hhh:mm:ss
-#PBS -l walltime=40:00:00
+#PBS -l walltime=12:00:00
 
 # After job starts, must goto working directory. 
 # $PBS_O_WORKDIR is the directory from where the job is fired. 
