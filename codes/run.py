@@ -345,7 +345,7 @@ def main(args):
     # Set valid dataloader as it would be evaluated during training
     best_valid_mrr = 0.0
     if args.do_train:
-        logging.info('learning_rate = %d' % current_learning_rate)
+        logging.info('learning_rate = %f' % current_learning_rate)
 
         training_logs = []
         # Training Loop
